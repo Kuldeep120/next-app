@@ -3,5 +3,6 @@ module.exports = {
     tailwindcss: {},
     autoprefixer: {},
     '@tailwindcss/postcss': {} // Add this line
+
   },
 }
