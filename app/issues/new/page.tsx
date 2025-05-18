@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Button, TextField, Callout, Text } from "@radix-ui/themes";
+import { Button, TextField, Callout, Text, Spinner } from "@radix-ui/themes";
 import SimpleMDE from "react-simplemde-editor";
 import { useForm, Controller } from "react-hook-form";
 import "easymde/dist/easymde.min.css";
@@ -8,14 +8,16 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createIssueSchema } from "@/app/validationSchema";
-import { z } from "zod";
+import { set, z } from "zod";
 import ErrorMessage from "@/app/components/ErrorMessage";
+// import Spinner from "@/app/components/Spinner";
 
 type IssueForm = z.infer<typeof createIssueSchema>;
 const NewIssue = () => {
   const router = useRouter();
   const [error, setError] = useState("");
-  const {
+  const [isSubmitting, setSubmitting] = useState(false);
+   const {
     register,
     control,
     handleSubmit,
@@ -23,6 +25,19 @@ const NewIssue = () => {
   } = useForm<IssueForm>({
     resolver: zodResolver(createIssueSchema),
   });
+
+  const onSubmit = handleSubmit(async (data) => {
+    console.log(data);
+    try {
+      setSubmitting(true);
+      const rep = await axios.post("/api/issues", data);
+      router.push("/issues");
+    } catch (err) {
+      setSubmitting(false);
+      setError("An unexpected error has occured");
+    }
+  });
+ 
   return (
     <div className="max-w-xl">
       {error && (
@@ -32,15 +47,7 @@ const NewIssue = () => {
       )}
       <form
         className="space-y-3"
-        onSubmit={handleSubmit(async (data) => {
-          console.log(data);
-          try {
-            const rep = await axios.post("/api/issues", data);
-            router.push("/issues");
-          } catch (err) {
-            setError("An unexpected error has occured");
-          }
-        })}
+        onSubmit={onSubmit}
       >
         <TextField.Root
           placeholder="Title"
@@ -55,7 +62,10 @@ const NewIssue = () => {
           )}
         />
         <ErrorMessage>{errors.description?.message}</ErrorMessage>
-        <Button>Submit New Issue</Button>
+        {/* <Button>Submit New Issue <Spinner></Spinner></Button> */}
+        <Button disabled={isSubmitting}>
+          Submit New Issue {isSubmitting && <Spinner />}
+        </Button>
       </form>
     </div>
   );
